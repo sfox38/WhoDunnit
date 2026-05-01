@@ -63,7 +63,7 @@ Whodunnit listens to automation, script, and scene events *before* they fire the
 
 1. **Cache hit on the context ID** -> The state change was caused by an automation, script, or scene that Whodunnit pre-cached. This is a direct, reliable match. *Confidence: High.*
 
-2. **No cache hit, but a `user_id` is on the context** -> A user acted directly via the dashboard, mobile app, or similar UI. Whodunnit resolves the user ID to a friendly name. If the user ID belongs to a service account (Node-RED, AppDaemon, a custom script, etc.) rather than a real person, it is classified as a **Service Account** trigger instead. *Confidence: High (or Low on hardware platforms susceptible to context bleed - see [Caveats](#caveats-and-limitations)).*
+2. **No cache hit, but a `user_id` is on the context** -> A user acted directly via the dashboard, mobile app, or similar UI. Whodunnit resolves the user ID to a friendly name. If the user ID belongs to a service account (Node-RED, AppDaemon, a custom script, etc.) rather than a real person, it is classified as a **Service Account** trigger instead. *Confidence: High.*
 
 3. **No cache hit, but a `parent_id` exists** -> HA was involved (something upstream caused this). Whodunnit first attempts to resolve the source by looking up the parent context ID in the cache - this successfully identifies the source in common chains such as automation -> script -> entity. If the parent is also not cached, the event is classified as **Automation (Indirect)**. *Confidence: High if parent resolved, Medium if not.*
 
@@ -568,7 +568,7 @@ automation:
             {{ (state_attr('light.living_room', 'brightness') | int / 255 * 100) | round }}%.
 ```
 
-> **Tip:** Because Whodunnit rate-limits attribute-only updates to one per second, rapidly sliding a brightness slider on the dashboard will produce a single log entry for the gesture rather than flooding the log with every intermediate value.
+> **Tip:** Because Whodunnit rate-limits attribute-only updates to one per two seconds, rapidly sliding a brightness slider on the dashboard will produce a single log entry for the gesture rather than flooding the log with every intermediate value.
 
 #### Alert when confidence is low (possible misclassification)
 
@@ -714,10 +714,24 @@ Home Assistant has some quirks that may affect Whodunnit's accuracy in specific,
 ---
 ## History
 
-### Version 1.2.1
-16 March 2026
+### Version 1.3.0
+30 April 2026
 
-* Version bump to include the brand icons for Home Assistant 2026.3 and up.
+* **Architecture:** Replaced per-sensor global event listeners with a single shared listener set. Previously, each tracked entity registered its own listeners for all automation, script, and service call events system-wide, scaling as O(N). Now a single set of listeners populates a shared context cache that all sensors read from.
+* Fixed a race condition where rapid consecutive state changes during a user identity lookup could produce a sensor state mixing fields from two different events.
+* User identity cache now expires after 5 minutes. Previously, person name and service account status were cached permanently until HA restarted, causing stale classifications after person renames or account changes.
+* Cached the bleed-platform check per entity (resolved once at setup rather than on every state change).
+* Added `entity_category: diagnostic` so the sensor is properly excluded from energy dashboards, voice assistants, and area summaries.
+* Added `SensorDeviceClass.ENUM` with a defined options list for richer UI support.
+* Added target entity availability tracking  -  the sensor now reports unavailable if the tracked entity is removed from HA.
+* Added diagnostics support (Settings -> Integrations -> Whodunnit -> Download diagnostics).
+* Migrated `device_info` from plain dicts to the typed `DeviceInfo` dataclass.
+* Validated restored state on startup  -  invalid state slugs from older versions are now logged and reset to `monitoring` instead of silently persisting.
+* Removed unused imports and dead code.
+
+* **Breaking changes:**
+  * Default attribute values (`source_type`, `source_id`, `user_id`, `event_time`, `context_id`) changed from the string `"None"` to actual `null`. Update any automations or templates that test for the string value `"None"`  -  use `is none` or `== None` in Jinja2 templates instead.
+  * The `source_id` for unresolved automation chains changed from `automation.indirect` to `whodunnit.indirect`. Update any automations filtering on `source_id: automation.indirect`.
 
 ### Version 1.2
 22 February 2026
