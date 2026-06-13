@@ -1,8 +1,8 @@
-# Whodunnit 🕵️
+# Whodunnit
 
 **A Home Assistant Custom Integration - Know exactly what triggered your smart devices.**
 
-Ever found a light on that shouldn't be, or a switch that tripped unexpectedly, and wondered: *was that an automation, someone on the dashboard, a physical button press, or something else?* Whodunnit answers that question with a dedicated diagnostic sensor for each entity you choose to monitor. Whodunnit itself can also be used to trigger automations which depend on the source context. 
+Ever found a light on that shouldn't be, or a switch that tripped unexpectedly, and wondered: *was that an automation, someone on the dashboard, a physical button press, or something else?* Whodunnit answers that question with a dedicated diagnostic sensor for each entity you choose to monitor. Whodunnit can also trigger automations based on the detected source.
 
 ---
 
@@ -100,7 +100,7 @@ Each Whodunnit sensor exposes the following attributes:
 | `source_name` | Human-readable name of the trigger | `Morning Lights` |
 | `context_id` | Home Assistant's internal event ID for this change | `01HS3B...` |
 | `user_id` | The HA user UUID (only populated for UI triggers) | `8f2b...` |
-| `event_time` | ISO 8601 timestamp of when the change was detected | `2026-02-30T06:47:43` |
+| `event_time` | ISO 8601 timestamp of when the change was detected | `2026-02-30T06:47:43+07:00` |
 | `confidence` | How reliable the classification is | `high`, `medium`, `low` |
 | `history_log` | A list of the last 25 trigger events (newest first) | [*(see below)*](#history-log-attribute) |
 | `cache_debug` | Indicates why an event was classified the way it was | [*(see below)*](#cache-debug-attribute) |
@@ -174,7 +174,7 @@ Read-only sensor entities are intentionally excluded because their state is driv
 
 ### Helper and Virtual Devices
 
-Helper entities (Templated devices, `input_select`, `input_number`, etc.) usually do not belong to a physical device. For these, Whodunnit automatically creates a **virtual device** to host the sensor in the HA UI. This virtual device appears in the Devices list under the Whodunnit integration and is automatically removed when you delete the Whodunnit entry for that helper.
+Helper entities (template entities, `input_select`, `input_number`, etc.) usually do not belong to a physical device. For these, Whodunnit automatically creates a **virtual device** to host the sensor in the HA UI. This virtual device appears in the Devices list under the Whodunnit integration and is automatically removed when you delete the Whodunnit entry for that helper.
 
 ---
 
@@ -184,8 +184,8 @@ Helper entities (Templated devices, `input_select`, `input_number`, etc.) usuall
 
 A quick look at the Whodunnit sensor on any device's page instantly tells you how the device was last activated. Expand the attributes for the full picture - who, what, when, and how confident the answer is.
 
-<table border="0"><tr><td width="50%" valign="top"><img src="https://github.com/sfox38/whodunnit/blob/main/images/sensor.png" width="100%"></td>
-<td width="50%" valign="top"><img src="https://github.com/sfox38/whodunnit/blob/main/images/attributes.png" width="100%"></td></tr></table>
+<table border="0"><tr><td width="50%" valign="top"><img src="https://raw.githubusercontent.com/sfox38/whodunnit/main/images/sensor.png" width="100%"></td>
+<td width="50%" valign="top"><img src="https://raw.githubusercontent.com/sfox38/whodunnit/main/images/attributes.png" width="100%"></td></tr></table>
 
 **Common debugging scenarios:**
 - *"Why did my bedroom light turn on at 3 am?"* - Check `source_name` to see which automation was responsible.
@@ -198,7 +198,7 @@ A quick look at the Whodunnit sensor on any device's page instantly tells you ho
 
 #### Basic Status Card
 <table border="0"><tr><td width="50%" valign="top">This card displays the current trigger source and all its attributes at a glance. Paste the entire block into your dashboard as a new card, and change only the entity ID on the `&target` line.</td>
-<td width="50%" valign="top"><img src="https://github.com/sfox38/whodunnit/blob/main/images/sensorcard.png" width="100%"></td></tr></table>
+<td width="50%" valign="top"><img src="https://raw.githubusercontent.com/sfox38/whodunnit/main/images/sensorcard.png" width="100%"></td></tr></table>
 
 
 ```yaml
@@ -257,7 +257,7 @@ entities:
 
 Change only the `entity_id` variable on the first line of the `content` block.
 </td>
-<td width="50%" valign="top"><img src="https://github.com/sfox38/whodunnit/blob/main/images/historycard.png"></td>
+<td width="50%" valign="top"><img src="https://raw.githubusercontent.com/sfox38/whodunnit/main/images/historycard.png"></td>
 </tr></table>
 
 ```yaml
@@ -470,7 +470,7 @@ trigger:
       source_type: user               # and/or filter by source category
 ```
 
-> **Note:** `event_data` filtering uses exact string matching. If `source_name` could be `"Alex Smith"` rather than `"Alex"`, use a template condition instead of an `event_data` filter.
+> **Note:** `event_data` filtering uses exact string matching. If a field's value may vary - for example a `source_name` that could be a full name rather than a first name - use a template condition instead of an `event_data` filter. See the tip under [Automations](#automations) for an example.
 
 ---
 
@@ -613,10 +613,9 @@ automation:
 ---
 ## History Log Attribute
 
-The `history_log` attribute records the last 25 trigger events for the tracked entity, newest-first. It persists across HA restarts and is visible on the entity's detail page in Developer Tools -> States.
+The `history_log` attribute records the last 25 trigger events for the tracked entity, newest-first. It persists across HA restarts.
 
-
-You can inspect it directly on the entity's Attributes tab or the detail page in Developer Tools -> States, access it in templates and automations, or display it using the History Log dashboard card presented in the [Use Cases](#use-cases) section.
+You can inspect it on the entity's Attributes tab or in Developer Tools -> States, access it in templates and automations, or display it using the History Log dashboard card presented in the [Use Cases](#use-cases) section.
 
 ```yaml
 history_log:
@@ -677,7 +676,7 @@ cache_debug:
 
 `total_cache_entries` - total number of HA actions currently cached system-wide. Gives a sense of activity level without exposing unrelated details.
 
-`matched_entry` - the cache entry that identified the last trigger source. Contains the type, source_id, truncated context_id, and how old the entry was at the moment of matching. For UI entries on ESPHome devices, a `seen` flag indicates whether a physical bleed was detected.
+`matched_entry` - the cache entry that identified the last trigger source. Contains the type, source_id, truncated context_id, and how old the entry was at the moment of matching. For UI entries on ESPHome devices, a `seen` flag shows whether the entry had already been matched once before - a signal that a later hit may be context bleed from a physical press rather than a new dashboard action (see [Caveats](#caveats-and-limitations)).
 
 ### Diagnosing a misclassification
 
@@ -689,7 +688,7 @@ If an event was classified as `device` when you expected an `automation` or `scr
 - The entity is not on a supported platform.
 - A timing edge case on a high-load system.
 
-If `matched_entry` is present but shows the wrong source, the context ID was reused by a different action - which should not occur under normal HA operation and may indicate an integration-level issue.
+If `matched_entry` is present but shows the wrong source, the context ID was reused by a different action. Outside the known ESPHome bleed window (see [Caveats](#caveats-and-limitations)), this should not occur under normal HA operation and may indicate an integration-level issue.
 
 ---
 
@@ -707,12 +706,21 @@ Home Assistant has some quirks that may affect Whodunnit's accuracy in specific,
 
 **Local Polling Devices (e.g. LocalTuya):** Polling-based integrations take a short time to re-establish their state after HA restarts. Allow approximately 60 seconds after a restart before Whodunnit can reliably track these devices.
 
-**Advanced Tuning:** The context cache TTL (default 2 minutes) and the history log size (default 25 entries) are configurable via constants in `const.py` for advanced users who need to tune Whodunnit for high-load or memory-constrained systems. The relevant constants are `HISTORY_LOG_SIZE` for the log length and the cache cleanup interval in `_cleanup_cache`.
+**Advanced Tuning:** Advanced users who need to tune Whodunnit for high-load or memory-constrained systems can adjust the constants in `const.py`: `CACHE_TTL` (context cache lifetime, default 120 seconds), `CACHE_MAX_SIZE` (maximum cached contexts, default 200), `CACHE_CLEANUP_INTERVAL` (minimum seconds between cache cleanup passes, default 30), `USER_CACHE_TTL` (user identity cache lifetime, default 300 seconds), and `HISTORY_LOG_SIZE` (history log length, default 25 entries).
 
 **Physical vs. Internal Events:** When `source_type` is `device`, the trigger could be either a genuine physical button press or a device-internal firmware event (such as an inching or [auto-off timer](https://github.com/sfox38/time_off)). Home Assistant does not distinguish between these at the context level, so Whodunnit cannot either.
 
 ---
 ## History
+
+### Version 1.3.1
+11 June 2026
+
+* **Privacy:** Diagnostics downloads now redact identifying data. HA user UUIDs are replaced with stable per-dump placeholders (`user_1`, `user_2`, ...) so cache entries can still be cross-referenced, and person names and person entity IDs are no longer included. This makes diagnostics files safe to attach to public issue reports.
+* The config flow now validates the selected entity server-side (valid entity ID format, supported domain, entity exists in HA). Previously these rules were enforced only by the frontend picker, so a raw API submission could create a config entry that never produced a working sensor. Invalid submissions now show an error on the form instead.
+* Removed unused constants (`ESPHOME_BLEED_THRESHOLD`, `NAME_TRACKER_PREFIX`, `NAME_SERVICE_ACCOUNT`) and rewrote the stale comment that still described the superseded threshold-based ESPHome bleed detection  -  confidence is determined by the cache "seen" flag, not cache age.
+* New Icon
+* Documentation: the Advanced Tuning section now references the actual tuning constants in `const.py` (`CACHE_TTL`, `CACHE_MAX_SIZE`, `CACHE_CLEANUP_INTERVAL`, `USER_CACHE_TTL`, `HISTORY_LOG_SIZE`); clarified that the `cache_debug` `seen` flag signals a *possible* bleed rather than a detected one; resolved a contradiction between the cache debug notes and the documented ESPHome bleed window; assorted grammar and typo fixes.
 
 ### Version 1.3.0
 1 May 2026
@@ -769,7 +777,7 @@ Home Assistant has some quirks that may affect Whodunnit's accuracy in specific,
 * Added `confidence` attribute `High`/`Medium`/`Low`
 * Added a history log in attributes
 * Further refinement to the Context cascade to ensure instantaneous and more accurate identification
-* Refactored the code to improve memory usage, speed, and stabilty
+* Refactored the code to improve memory usage, speed, and stability
 * Improved error logging
 * Improved comments in the source code
 * Rewrite of this README.md
