@@ -1,0 +1,45 @@
+name: Tests
+
+# Run the test suite on every push and pull request. To limit which branches
+# trigger a run, replace `push:` below with e.g.
+#   push:
+#     branches: [main, dev]
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # homeassistant 2026.6.2 (pinned in requirements_test.txt) requires
+        # Python >=3.14.2, so the runner Python must be 3.14+. Bump this in step
+        # with the HA pin.
+        python-version: ["3.14"]
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements_test.txt
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_test.txt
+
+      # `python -m pytest` (not bare `pytest`) puts the repo root on sys.path so
+      # `custom_components.whodunnit` is importable. pytest config, coverage, and
+      # GitHub failure annotations come from pyproject.toml + the test pin.
+      - name: Run tests
+        run: python -m pytest

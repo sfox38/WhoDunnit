@@ -1,0 +1,16 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+# pytest-homeassistant-custom-component disables network sockets by default;
+# our tests are fully offline so that is exactly what we want.
+addopts = "--cov=custom_components/whodunnit --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["custom_components/whodunnit"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]

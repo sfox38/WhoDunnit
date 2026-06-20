@@ -1,0 +1,11 @@
+# Test dependencies for the Whodunnit Home Assistant custom integration.
+#
+# pytest-homeassistant-custom-component is version-locked to a specific
+# Home Assistant release. The pin below matches the integration's target
+# (homeassistant 2026.6.2); bump both together when upgrading HA.
+#
+# Install into an isolated virtualenv:
+#   python3 -m venv .venv
+#   .venv/bin/python -m pip install -r requirements_test.txt
+homeassistant==2026.6.2
+pytest-homeassistant-custom-component==0.13.338

@@ -1,0 +1,38 @@
+name: Validate
+
+# Standard validation for HACS custom integrations:
+#  - hassfest: Home Assistant's official manifest/integration checker
+#  - HACS:     verifies the repo meets HACS publishing requirements
+# The daily schedule catches breakage when the upstream actions or their
+# requirements change, even without a push.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  hassfest:
+    name: hassfest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+
+      - name: Run hassfest
+        uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    name: HACS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v5
+
+      - name: Run HACS validation
+        uses: hacs/action@main
+        with:
+          category: integration
